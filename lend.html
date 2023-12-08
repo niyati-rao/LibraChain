@@ -93,7 +93,7 @@
           <div class="col-lg-12 mt-5 mt-lg-0">
         
   
-              <form action="forms/contact.php" method="post" role="form" class="php-email-form">
+              <form id="bookForm" action="forms/contact.php" method="post" role="form" class="php-email-form">
                 <div class="row">
                   <div class="form-group mt-3">
                     <input type="text" name="name" class="form-control" id="name" placeholder="Book Name" required>
@@ -115,8 +115,12 @@
   
         </div>
       </section><!-- End Lend Section -->
-  
-
+      <section id="bookDisplaySection">
+        <div class="container" data-aos="fade-up">
+          <h2>Book List</h2>
+          <p id="bookList"></p>
+        </div>
+      </section>
 
   </main><!-- End #main -->
 
@@ -189,6 +193,54 @@
 
   <!-- Template Main JS File -->
   <script src="assets/js/main.js"></script>
+  <script>
+    const bookForm = document.getElementById('bookForm');
+    const bookDisplay = document.getElementById('bookList');
+
+    // Function to fetch all books from the backend
+    const fetchBooks = async () => {
+      const response = await fetch('http://13.200.106.177:3000/book?title=${title}&author=${author}');
+      const books = await response.json();
+      return books;
+    };
+
+    // Function to render the book list
+    const renderBooks = async () => {
+      const books = await fetchBooks();
+      bookDisplay.textContent = JSON.stringify(books, null, 2);
+      // books.forEach((book) => {
+      //   const li = document.createElement('li');
+      //   li.textContent = `${book.title} by ${book.author}`;
+      //   bookList.appendChild(li);
+      // });
+    };
+
+    // Function to add a new book
+    const addBook = async (event) => {
+      event.preventDefault();
+
+      const title = document.getElementById('name').value;
+      const author = document.getElementById('author').value;
+
+      await fetch('http://13.200.106.177:3000/books', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'mode': 'no-cors'
+        },
+        body: JSON.stringify({ title, author }),
+      });
+
+      renderBooks();
+      bookForm.reset();
+    };
+
+  // Event listener for form submission
+  bookForm.addEventListener('submit', addBook);
+
+  // Initial render of books
+  renderBooks();
+  </script>
 
 </body>
 
