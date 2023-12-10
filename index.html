@@ -78,22 +78,28 @@
 
       <div class="row gy-4 mt-5 justify-content-center" data-aos="zoom-in" data-aos-delay="250">
         <div class="col-xl-2 col-md-4">
+          <a href="#query">
           <div class="icon-box">
             <i class="bi bi-search"></i>
-            <h3><a href="#query">query</a></h3>
+            <h3>query</h3>
           </div>
+        </a>
         </div>
         <div class="col-xl-2 col-md-4">
+          <a href="lend.html">
           <div class="icon-box">
             <i class="bi bi-plus-square"></i>
-            <h3><a href="lend.html">Lend Book</a></h3>
+            <h3>Lend Book</h3>
           </div>
+        </a>
         </div>
         <div class="col-xl-2 col-md-4">
+          <a href="borrow.html">
           <div class="icon-box">
             <i class="bi bi-dash-square"></i>
-            <h3><a href="borrow.html">Borrow Book</a></h3>
+            <h3>Borrow Book</h3>
           </div>
+        </a>
         </div>
         
       
@@ -110,10 +116,11 @@
         <div class="container" data-aos="fade-up">
           
   
-            <form action="forms/contact.php" method="post" role="form" class="php-email-form">
+            <form id="bookForm" action="forms/contact.php" method="post" role="form" class="php-email-form">
               <div class="row">
                 <div class="section-title">
                   <p>Query</p>
+                  <div id="responseMessage" class="mt-3"></div>
                 </div>
                 <div class="col form-group">
                   <input type="text" name="name" class="form-control" id="name" placeholder="Book Name" aria-label="Book Name">
@@ -134,6 +141,13 @@
   
         </div>
       </section><!-- End query Section -->
+      <section id="bookDisplaySection">
+        <div class="container" data-aos="fade-up">
+          <h2>Book List</h2>
+          <p id="bookList"></p>
+        </div>
+      </section>
+
 <!-- ======= Books Section ======= -->
 <section id="clients" class="clients">
   <div class="container" data-aos="zoom-in">
@@ -276,7 +290,111 @@
 
 <!-- Template Main JS File -->
 <script src="assets/js/main.js"></script>
+<script>
+const bookForm = document.getElementById('bookForm');
+const bookDisplay = document.getElementById('bookList');
+const responseMessage = document.getElementById('responseMessage');
 
+// Function to fetch all books from the backend
+const fetchBooks = async () => {
+    const id = sessionStorage.getItem('id') || '101'; // Use '101' as a default value
+    if (id === '101') {
+        // Display an error message and prompt to log in or register
+        responseMessage.innerHTML = 'Error: Please log in or register to access the library.';
+        return [];
+    }
+    const response = await fetch(`http://13.200.106.177:3000/catalogue?id=${id}`);
+    const books = await response.json();
+    return books;
+};
+
+// Function to format books into an HTML table
+const formatBooksTable = (books) => {
+    const table = document.createElement('table');
+    table.classList.add('table'); // Add Bootstrap class for styling
+
+    // Create table header
+    const thead = table.createTHead();
+    const headerRow = thead.insertRow();
+
+    // Add line number column header
+    const lineNumberHeader = document.createElement('th');
+    lineNumberHeader.scope = 'col';
+    lineNumberHeader.appendChild(document.createTextNode('#'));
+    headerRow.appendChild(lineNumberHeader);
+
+    ['Title', 'Author', 'Genre'].forEach(headerText => {
+        const th = document.createElement('th');
+        th.scope = 'col';
+        th.appendChild(document.createTextNode(headerText));
+        headerRow.appendChild(th);
+    });
+
+    // Create table body
+    const tbody = table.createTBody();
+    books.forEach((book, index) => {
+        const row = tbody.insertRow();
+        const lineNumberCell = row.insertCell();
+        lineNumberCell.appendChild(document.createTextNode(index + 1));
+
+        ['name', 'author', 'genre'].forEach(key => {
+            const cell = row.insertCell();
+            cell.appendChild(document.createTextNode(book.book[key]));
+        });
+    });
+
+    return table;
+};
+
+// Function to render books
+const renderBooks = async (event) => {
+    const books = await fetchBooks();
+    if (books.length > 0) {
+        const formattedTable = formatBooksTable(books);
+        bookDisplay.innerHTML = '';
+        bookDisplay.appendChild(formattedTable);
+        bookForm.reset();
+    }
+};
+
+// Function to render found books based on user input
+const renderFoundBooks = async (event) => {
+    event.preventDefault();
+    const name = document.getElementById('name').value || 'NA';
+    const author = document.getElementById('author').value || 'NA';
+    const genre = document.getElementById('genre').value || 'NA';
+    const id = sessionStorage.getItem('id') || '101'; // Use '101' as a default value
+
+    const response = await fetch(`http://13.200.106.177:3000/find?id=${id}&name=${name}&author=${author}&genre=${genre}`);
+    const books = await response.json();
+
+    if (books.length === 0) {
+        responseMessage.innerHTML = 'No books found with the given criteria.';
+    } else {
+        const formattedTable = formatBooksTable(books);
+        bookDisplay.innerHTML = '';
+        bookDisplay.appendChild(formattedTable);
+    }
+
+    bookForm.reset();
+};
+
+// Check if 'id' exists in session storage
+const userId = sessionStorage.getItem('id');
+
+if (!userId) {
+    // Display a message asking the user to log in or register
+    responseMessage.innerHTML = 'Please log in or register to access the library.';
+} else {
+    // Clear the message if the user is logged in
+    responseMessage.innerHTML = '';
+}
+
+const findButton = document.querySelector('.btn-warning');
+findButton.addEventListener('click', renderBooks);
+bookForm.addEventListener('submit', renderFoundBooks);
+
+</script>
 
 </body>
 

@@ -28,13 +28,6 @@
   <!-- Template Main CSS File -->
   <link href="assets/css/style.css" rel="stylesheet">
 
-  <!-- =======================================================
-  * Template Name: Gp
-  * Updated: Nov 25 2023 with Bootstrap v5.3.2
-  * Template URL: https://bootstrapmade.com/gp-free-multipurpose-html-bootstrap-template/
-  * Author: BootstrapMade.com
-  * License: https://bootstrapmade.com/license/
-  ======================================================== -->
 </head>
 
 <body>
@@ -81,43 +74,38 @@
       </div>
     <!-- ======= Lend Section ======= -->
     <section id="Lend" class="Lend">
-        <div class="container" data-aos="fade-up">
-          <div class="row">
-            <!-- <div class="col-lg-6 order-1 order-lg-2" data-aos="fade-left" data-aos-delay="100">
-              <img src="assets/img/Lend.jpg" class="img-fluid" alt="">
-            </div> -->
-            <div class="section-title">
-              <p>Borrow or Return a Book</p>
-            </div>
-            <div class="col-lg-12 mt-4">
-                <p class="text-center">The standard lending period is 7 days. Please note that any delay in returning a book will result in a reduction of the lending period by one day for each day the return is late. We appreciate your cooperation in maintaining timely returns.</p>
-              </div>
+      <div class="container" data-aos="fade-up">
+        <div class="row">
+          <div class="section-title">
+            <p>Borrow or Return a Book</p>
+          </div>
+          <div class="col-lg-12 mt-4">
+            <p class="text-center">The standard lending period is 7 days. Please note that any delay in returning a book will result in a reduction of the lending period by one day for each day the return is late. We appreciate your cooperation in maintaining timely returns.</p>
+          </div>
           <div class="col-lg-12 mt-5 mt-lg-0">
-        
-  
-              <form action="forms/contact.php" method="post" role="form" class="php-email-form">
-                <div class="row">
-                  <div class="form-group mt-3">
-                    <input type="text" name="name" class="form-control" id="name" placeholder="Book Name" required>
-                  </div>
-                </div>
-                <div class="form-group mt-3">
-                  <input type="text" class="form-control" name="studentid" id="studentid" placeholder="Student ID" required>
-                </div>
-                <div class="text-center mt-3">
-                    <button type="submit" class="btn btn-secondary d-inline-block" >Borrow</button> <h6 class="mx-2 d-inline-block">or</h6>
-                    <button type="submit" class="btn btn-warning d-inline-block">Return</button>
-                  </div>
-  
-  
-              </form>
-  
-            </div>
-  
-  
-        </div>
-      </section><!-- End Lend Section -->
 
+            <select id="bookDropdown" class="form-select">
+              <!-- Dropdown options will be dynamically populated here -->
+            </select>
+            <div class="text-center mt-3">
+              <button type="button" class="btn btn-secondary " onclick="borrow()">Borrow</button>
+            </div>
+
+          </div>
+          <div class="col-lg-12 mt-5 mt-lg-0">
+
+            <select id="returnDropdown" class="form-select">
+              <!-- Dropdown options will be dynamically populated here -->
+            </select>
+            <div class="text-center mt-3">
+              <button type="button" class="btn btn-warning" onclick="returnBook()">Return</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section><!-- End Lend Section -->
+      <div id="responseMessage" class="mt-3"></div>
   </main><!-- End #main -->
 
   <footer id="footer">
@@ -188,6 +176,166 @@
 
   <!-- Template Main JS File -->
   <script src="assets/js/main.js"></script>
+  <script>
+    
+    const fetchBooks = async () => {
+      const response = await fetch('http://13.200.106.177:3000/catalogue?id=101');
+      const books = await response.json();
+      return books;
+    };
+  const bookDisplay = document.getElementById('bookList');
+  const bookForm = document.getElementById('bookForm');
+  const borrowButton = document.querySelector('.btn-secondary'); // Select the "Add" button
+  const returnButton = document.querySelector('.btn-warning'); // Select the "Update" button
+  const responseMessageDiv = document.getElementById('responseMessage');
+  const currentUrl = window.location.href;
+  const bookDropdown = document.getElementById('bookDropdown');
+  const returnDropdown = document.getElementById('returnDropdown');
+
+  console.log(currentUrl);
+
+  // Function to display response messages
+  const displayMessage = (message, isSuccess = true) => {
+    responseMessageDiv.innerHTML = `<div class="alert ${isSuccess ? 'alert-success' : 'alert-danger'}" role="alert">${message}</div>`;
+  };
+
+  // Function to borrow a book
+  const renderBookDropdown = async () => {
+      const books = await fetchBooks();
+
+      // Clear existing options
+      bookDropdown.innerHTML = '';
+
+      // Create a default option
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.text = 'Select a book';
+      bookDropdown.appendChild(defaultOption);
+
+      // Populate dropdown with books without an issuer
+      books.forEach((book, index) => {
+        if (book.book.issuer === 'NA' || book.book.issuer === undefined) {
+          const option = document.createElement('option');
+          option.value = book.book.name;
+          option.text = book.book.name;
+          bookDropdown.appendChild(option);
+        }
+      });
+    };
+
+    // Initial rendering of book dropdown
+    renderBookDropdown();
+
+    // Function to borrow a book using the selected dropdown option
+    const borrow = async () => {
+      const selectedBookName = bookDropdown.value;
+      const studentId = sessionStorage.getItem('id');
+
+      if (!studentId || !selectedBookName) {
+        // Display a message to register or log in
+        displayMessage('Please register, log in, and select a book to borrow.', false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://13.200.106.177:3000/issue?id=${studentId}&name=${selectedBookName}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'mode': 'no-cors'
+          },
+        });
+
+        const data = await response.json();
+        console.log('Borrow Response Status:', response.status);
+        console.log('Borrow Response Data:', data);
+
+        // Display the response on the webpage
+        displayMessage(`Borrow response: ${JSON.stringify(data)}`, true);
+      } catch (error) {
+        console.error('Error during borrow request:', error);
+        // Display the error on the webpage
+        displayMessage(`Error during borrow request: ${error.message}`, false);
+      }
+
+      // Refresh the book dropdown after borrowing
+      renderBookDropdown();
+    };
+
+
+// Function to return a book
+const renderReturnDropdown = async () => {
+  const studentId = sessionStorage.getItem('id');
+  if (!studentId) {
+    // Display a message to register or log in
+    displayMessage('Please register or log in to return a book.', false);
+    return;
+  }
+
+  const books = await fetchBooks();
+
+
+  // Create a default option
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.text = 'Select a book to return';
+  returnDropdown.appendChild(defaultOption);
+
+  // Populate dropdown with books issued by the current student
+  books.forEach((book, index) => {
+    if (book.book.issuer === studentId) {
+      const option = document.createElement('option');
+      option.value = book.book.name;
+      option.text = book.book.name;
+      returnDropdown.appendChild(option);
+    }
+  });
+};
+
+
+renderReturnDropdown();
+
+const returnBook = async () => {
+  const selectedBookName = returnDropdown.value;
+  const studentId = sessionStorage.getItem('id');
+
+  if (!studentId || !selectedBookName) {
+    // Display a message to register or log in
+    displayMessage('Please register, log in, and select a book to return.', false);
+    return;
+  }
+
+  try {
+    const response = await fetch(`http://13.200.106.177:3000/return?id=${studentId}&name=${selectedBookName}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'mode': 'no-cors'
+      },
+    });
+
+    const data = await response.json();
+    console.log('Return Response Status:', response.status);
+    console.log('Return Response Data:', data);
+
+    // Display the response on the webpage
+    displayMessage(`Return response: ${JSON.stringify(data)}`, true);
+  } catch (error) {
+    console.error('Error during return request:', error);
+    // Display the error on the webpage
+    displayMessage(`Error during return request: ${error.message}`, false);
+  }
+
+  // Refresh the return dropdown after returning
+  renderReturnDropdown();
+};
+
+
+  // Event listener for form submission
+  borrowButton.addEventListener('click', borrow);
+  returnButton.addEventListener('click', returnBook);
+
+  </script>
 
 </body>
 

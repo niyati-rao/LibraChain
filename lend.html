@@ -89,11 +89,13 @@
             <div class="section-title">
               <p>Add/Updated Book Details for Lending</p>
             </div>
+            <p> please make sure your response for update book refers to an existing book and case-sensitive</p>
 
           <div class="col-lg-12 mt-5 mt-lg-0">
         
   
               <form id="bookForm" action="forms/contact.php" method="post" role="form" class="php-email-form">
+                <div id="responseMessage" class="mt-3"></div>
                 <div class="row">
                   <div class="form-group mt-3">
                     <input type="text" name="name" class="form-control" id="name" placeholder="Book Name" required>
@@ -105,8 +107,10 @@
                 <div class="form-group mt-3">
                   <input type="text" class="form-control" name="genre" id="genre" placeholder="Genre">
                 </div>
-                <div class="text-center mt-3"><button type="submit" class="btn btn-warning">Add</button></div>
-  
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-secondary d-inline-block" >Add</button> <h6 class="mx-2 d-inline-block">or</h6>
+                    <button type="submit" class="btn btn-warning d-inline-block">Update</button>
+                </div>
   
               </form>
   
@@ -196,10 +200,14 @@
   <script>
     const bookForm = document.getElementById('bookForm');
     const bookDisplay = document.getElementById('bookList');
+    const addButton = document.querySelector('.btn-secondary'); // Select the "Add" button
+    const updateButton = document.querySelector('.btn-warning'); // Select the "Update" button
+    const currentUrl = window.location.href;
+    console.log(currentUrl);
 
     // Function to fetch all books from the backend
     const fetchBooks = async () => {
-      const response = await fetch('http://13.200.106.177:3000/book?title=${title}&author=${author}');
+      const response = await fetch('http://13.200.106.177:3000/catalogue?id=101');
       const books = await response.json();
       return books;
     };
@@ -207,36 +215,112 @@
     // Function to render the book list
     const renderBooks = async () => {
       const books = await fetchBooks();
-      bookDisplay.textContent = JSON.stringify(books, null, 2);
-      // books.forEach((book) => {
-      //   const li = document.createElement('li');
-      //   li.textContent = `${book.title} by ${book.author}`;
-      //   bookList.appendChild(li);
-      // });
+      console.log(books);
+      const table = document.createElement('table');
+
+      // Create table header
+      const thead = table.createTHead();
+      const headerRow = thead.insertRow();
+
+      // Add line number column header
+      const lineNumberHeader = document.createElement('th');
+      lineNumberHeader.appendChild(document.createTextNode('#'));
+      headerRow.appendChild(lineNumberHeader);
+
+      ['Title', 'Author', 'Genre'].forEach(headerText => {
+        const th = document.createElement('th');
+        th.appendChild(document.createTextNode(headerText));
+        headerRow.appendChild(th);
+      });
+
+      // Create table body
+      const tbody = table.createTBody();
+      books.forEach((book, index) =>
+     {
+        const row = tbody.insertRow();
+    
+        // Add line number cell
+        const lineNumberCell = row.insertCell();
+        lineNumberCell.appendChild(document.createTextNode(index + 1));
+
+        // Add other cells
+        ['name', 'author', 'genre'].forEach(key => {
+          const cell = row.insertCell();
+          cell.appendChild(document.createTextNode(book.book[key]));
+        });
+    });
+
+// Clear existing content in bookDisplay and append the table
+    bookDisplay.innerHTML = '';
+    bookDisplay.appendChild(table);
+
+  // Append the unordered list to the bookDisplay
+    bookDisplay.appendChild(ul);
     };
 
     // Function to add a new book
     const addBook = async (event) => {
       event.preventDefault();
 
-      const title = document.getElementById('name').value;
-      const author = document.getElementById('author').value;
+      const name = document.getElementById('name').value;
+      const author = document.getElementById('author').value || 'NA';
+      const genre = document.getElementById('genre').value || 'NA';
+      const studentId = sessionStorage.getItem('id');
+      console.log(studentId);
 
-      await fetch('http://13.200.106.177:3000/books', {
-        method: 'POST',
+      if (!studentId) {
+        // Display a message on the webpage
+        document.getElementById('responseMessage').innerHTML = 'Please register or log in to add a book.';
+        return;
+      }
+
+      // Clear any existing messages
+      document.getElementById('responseMessage').innerHTML = '';
+
+      await fetch(`http://13.200.106.177:3000/add?id=${studentId}&name=${name}&author=${author}&genre=${genre}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'mode': 'no-cors'
         },
-        body: JSON.stringify({ title, author }),
-      });
+  });
 
-      renderBooks();
-      bookForm.reset();
-    };
+  renderBooks();
+  bookForm.reset();
+};
 
+// Function to update a book
+const updateBook = async (event) => {
+  event.preventDefault();
+
+  const name = document.getElementById('name').value;
+  const author = document.getElementById('author').value || 'NA';
+  const genre = document.getElementById('genre').value || 'NA';
+  const studentId = sessionStorage.getItem('id');
+
+  if (!studentId) {
+    // Display a message on the webpage
+    document.getElementById('responseMessage').innerHTML = 'Please register or log in to update a book.';
+    return;
+  }
+
+  // Clear any existing messages
+  document.getElementById('responseMessage').innerHTML = '';
+
+  await fetch(`http://13.200.106.177:3000/update?id=${studentId}&name=${name}&author=${author}&genre=${genre}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'mode': 'no-cors'
+    },
+  });
+
+  renderBooks();
+  bookForm.reset();
+};
   // Event listener for form submission
-  bookForm.addEventListener('submit', addBook);
+  addButton.addEventListener('click', addBook);
+  updateButton.addEventListener('click', updateBook);
 
   // Initial render of books
   renderBooks();

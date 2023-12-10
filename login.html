@@ -92,14 +92,10 @@
           <div class="col-lg-12 mt-5 mt-lg-0">
         
   
-              <form action="forms/contact.php" method="post" role="form" class="php-email-form">
-                <div class="row">
-                  <div class="form-group mt-3">
-                    <input type="text" name="Student" class="form-control" id="Student" placeholder="Student name" required>
-                  </div>
-                </div>
+              <form action="forms/contact.php" id= "loginForm" method="post" role="form" class="php-email-form">
+                <div id="responseMessage" class="mt-3"></div>
                 <div class="form-group mt-3">
-                  <input type="text" class="form-control" name="email" id="email" placeholder="email ID" required>
+                  <input type="email" class="form-control" name="email" id="email" placeholder="email ID" required>
                 </div>
                 <div class="text-center mt-3"><button type="submit" class="btn btn-warning">Log In</button></div>
   
@@ -185,6 +181,56 @@
 
   <!-- Template Main JS File -->
   <script src="assets/js/main.js"></script>
+  <script>
+  const loginForm = document.getElementById('loginForm');
+  const responseMessageDiv = document.getElementById('responseMessage');
+  const currentUrl = window.location.href;
+  console.log(currentUrl);
+
+  // Function to display response messages
+  const displayMessage = (message, isSuccess = true) => {
+    responseMessageDiv.innerHTML = `<div class="alert ${isSuccess ? 'alert-success' : 'alert-danger'}" role="alert">${message}</div>`;
+  };
+
+  // Function to login a new user
+  const login = async (event) => {
+    event.preventDefault();
+
+    const email = document.getElementById('email').value;
+
+    console.log(email);
+
+    try {
+      const response = await fetch(`http://13.200.106.177:3000/login?email=${email}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'mode': 'no-cors'
+        },
+      });
+
+      const data = await response.json();
+      console.log('Register Response Status:', response.status);
+      console.log('Register Response Data:', data);
+      const cleanedData = JSON.stringify(data);
+
+    // Store the cleaned value in sessionStorage with the name "id"
+      sessionStorage.setItem('id', cleanedData);
+
+    // Display the response on the webpage
+      displayMessage(`Registration number: ${cleanedData}`, true);
+    } catch (error) {
+      console.error('Error during login request:', error);
+      // Display the error on the webpage
+      displayMessage(`Error during login request: ${error.message}`, false);
+    }
+
+    loginForm.reset();
+  };
+
+  // Event listener for form submission
+  loginForm.addEventListener('submit', login);
+  </script>
 
 </body>
 

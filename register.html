@@ -93,14 +93,15 @@
           <div class="col-lg-12 mt-5 mt-lg-0">
         
   
-              <form action="forms/contact.php" method="post" role="form" class="php-email-form">
+              <form id="registerForm" action="forms/contact.php" method="post" role="form" class="php-email-form">
+                <div id="responseMessage" class="mt-3"></div> 
                 <div class="row">
                   <div class="form-group mt-3">
-                    <input type="text" name="Student" class="form-control" id="Student" placeholder="Student name" required>
+                    <input type="text" name="student" class="form-control" id="student" placeholder="Student name" required>
                   </div>
                 </div>
                 <div class="form-group mt-3">
-                  <input type="text" class="form-control" name="email" id="email" placeholder="email ID" required>
+                  <input type="email" class="form-control" name="email" id="email" placeholder="email ID" required>
                 </div>
                 <div class="text-center mt-3"><button type="submit" class="btn btn-warning">Register</button></div>
   
@@ -186,7 +187,55 @@
 
   <!-- Template Main JS File -->
   <script src="assets/js/main.js"></script>
+  <script>
+   const registerForm = document.getElementById('registerForm');
+  const responseMessageDiv = document.getElementById('responseMessage');
+  const currentUrl = window.location.href;
+  console.log(currentUrl);
 
+  // Function to display response messages
+  const displayMessage = (message, isSuccess = true) => {
+    responseMessageDiv.innerHTML = `<div class="alert ${isSuccess ? 'alert-success' : 'alert-danger'}" role="alert">${message}</div>`;
+  };
+
+  // Function to register a new user
+  const register = async (event) => {
+    event.preventDefault();
+
+    const name = document.getElementById('student').value;
+    const email = document.getElementById('email').value;
+
+    try {
+      const response = await fetch(`http://13.200.106.177:3000/student?email=${email}&name=${name}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'mode': 'no-cors'
+        },
+      });
+
+      const data = await response.json();
+      console.log('Register Response Status:', response.status);
+      console.log('Register Response Data:', data);
+      const cleanedData = JSON.stringify(data.replace(/\n/g, ''));
+
+    // Store the cleaned value in sessionStorage with the name "id"
+    sessionStorage.setItem('id', cleanedData);
+
+    // Display the response on the webpage
+    displayMessage(`Registration number: ${cleanedData}`, true);
+  } catch (error) {
+    console.error('Error during registration request:', error);
+    // Display the error on the webpage
+    displayMessage(`Error during registration request: ${error.message}`, false);
+  }
+    registerForm.reset();
+  };
+
+  // Event listener for form submission
+  registerForm.addEventListener('submit', register);
+
+  </script>
 </body>
 
 </html>
