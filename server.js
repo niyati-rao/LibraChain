@@ -5,10 +5,10 @@ const app = express();
 const port = 3000; // Use the specified port or default to 3000
 
 // Define the path to your static HTML file
-const staticFilePath = path.join(__dirname, 'public', 'index.html');
+const staticFilePath = path.join(__dirname, 'index.html');
 
 // Set up middleware to serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '')));
 
 // Define a route to serve the HTML file
 app.get('/', (req, res) => {
