@@ -218,13 +218,14 @@
       const data = await response.json();
       console.log('Register Response Status:', response.status);
       console.log('Register Response Data:', data);
-      const cleanedData = JSON.stringify(data.replace(/\n/g, ''));
+
+      const { id } = data;
 
     // Store the cleaned value in sessionStorage with the name "id"
-    sessionStorage.setItem('id', cleanedData);
+    sessionStorage.setItem('id', id);
 
     // Display the response on the webpage
-    displayMessage(`Registration number: ${cleanedData}`, true);
+    displayMessage(`Registration number: ${id}`, true);
   } catch (error) {
     console.error('Error during registration request:', error);
     // Display the error on the webpage
